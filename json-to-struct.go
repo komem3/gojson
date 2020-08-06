@@ -168,7 +168,7 @@ var intToWordMap = []string{
 
 type Parser func(io.Reader) (interface{}, error)
 
-func ParseJson(input io.Reader) (interface{}, error) {
+func ParseJSON(input io.Reader) (interface{}, error) {
 	var result interface{}
 	if err := json.NewDecoder(input).Decode(&result); err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func readFile(input io.Reader) ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	_, err := io.Copy(buf, input)
 	if err != nil {
-		return []byte{}, nil
+		return []byte{}, err
 	}
 	return buf.Bytes(), nil
 }
@@ -427,9 +427,10 @@ func lintFieldName(name string) string {
 	for i+1 <= len(runes) {
 		eow := false // whether we hit the end of a word
 
-		if i+1 == len(runes) {
+		switch {
+		case i+1 == len(runes):
 			eow = true
-		} else if runes[i+1] == '_' {
+		case runes[i+1] == '_':
 			// underscore; shift the remainder forward over any run of underscores
 			eow = true
 			n := 1
@@ -444,7 +445,7 @@ func lintFieldName(name string) string {
 
 			copy(runes[i+1:], runes[i+n+1:])
 			runes = runes[:len(runes)-n]
-		} else if unicode.IsLower(runes[i]) && !unicode.IsLower(runes[i+1]) {
+		case unicode.IsLower(runes[i]) && !unicode.IsLower(runes[i+1]):
 			// lower->non-lower
 			eow = true
 		}
@@ -459,7 +460,6 @@ func lintFieldName(name string) string {
 			// All the common initialisms are ASCII,
 			// so we can replace the bytes exactly.
 			copy(runes[w:], []rune(u))
-
 		} else if strings.ToLower(word) == word {
 			// already all lowercase, and not the first word, so uppercase the first character.
 			runes[w] = unicode.ToUpper(runes[w])
@@ -473,7 +473,7 @@ func lintFieldName(name string) string {
 func typeForValue(value interface{}, structName string, tags []string, subStructMap map[string]string, convertFloats bool) string {
 	//Check if this is an array
 	if objects, ok := value.([]interface{}); ok {
-		types := make(map[reflect.Type]bool, 0)
+		types := make(map[reflect.Type]bool)
 		for _, o := range objects {
 			types[reflect.TypeOf(o)] = true
 		}

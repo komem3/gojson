@@ -1,10 +1,12 @@
-package gojson
+package gojson_test
 
 import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/komem3/gojson"
 )
 
 // Test example document
@@ -26,7 +28,7 @@ func TestExampleArray(t *testing.T) {
 		t.Fatalf("error reading example_array.go: %s", err)
 	}
 
-	actual, err := Generate(i, ParseJson, "Users", "gojson", []string{"json"}, false, true)
+	actual, err := gojson.Generate(i, gojson.ParseJSON, "Users", "gojson", []string{"json"}, false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
