@@ -49,13 +49,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/komem3/gojson"
 )
 
 var (
-	name       = flag.String("name", "Foo", "the name of the struct")
+	name       = flag.String("name", "", "the name of the struct")
 	pkg        = flag.String("pkg", "", "the name of the package for the generated code")
 	inputName  = flag.String("input", "", "the name of the input file containing JSON (if input not provided via STDIN)")
 	outputName = flag.String("o", "", "the name of the file to write the output to (outputs to STDOUT by default)")
@@ -65,6 +66,8 @@ var (
 )
 
 func main() {
+	flag.StringVar(inputName, "i", "", "shorthand of input option")
+
 	flag.Parse()
 
 	if *format != "json" && *format != "yaml" {
@@ -97,6 +100,16 @@ func main() {
 		input = f
 	}
 
+	if *name == "" {
+		if *inputName == "" {
+			fmt.Fprintln(os.Stderr, "struct name is required")
+			os.Exit(1)
+		}
+		filename := filepath.Base(*inputName)
+		structName := gojson.FmtFieldName(filename[:len(filename)-len(filepath.Ext(filename))])
+		name = &structName
+	}
+
 	var convertFloats bool
 	var parser gojson.Parser
 	switch *format {
@@ -117,7 +130,7 @@ func main() {
 				log.Fatalf("writing output: %s", err)
 			}
 		} else {
-			fmt.Print(string(output))
+			fmt.Println(string(output))
 		}
 	}
 }
