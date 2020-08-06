@@ -198,7 +198,7 @@ func readFile(input io.Reader) ([]byte, error) {
 }
 
 // Generate a struct definition given a JSON string representation of an object and a name structName.
-func Generate(input io.Reader, parser Parser, structName, pkgName string, tags []string, subStruct bool, convertFloats bool) ([]byte, error) {
+func Generate(input io.Reader, parser Parser, structName string, pkgName string, tags []string, subStruct bool, convertFloats bool) ([]byte, error) {
 	var subStructMap map[string]string = nil
 	if subStruct {
 		subStructMap = make(map[string]string)
@@ -211,14 +211,19 @@ func Generate(input io.Reader, parser Parser, structName, pkgName string, tags [
 		return nil, err
 	}
 
+	var packageOut string
+	if pkgName != "" {
+		packageOut = "package " + pkgName + "\n\n"
+	}
+
 	switch iresult := iresult.(type) {
 	case map[interface{}]interface{}:
 		result = convertKeysToStrings(iresult)
 	case map[string]interface{}:
 		result = iresult
 	case []interface{}:
-		src := fmt.Sprintf("package %s\n\ntype %s %s\n",
-			pkgName,
+		src := fmt.Sprintf("%stype %s %s\n",
+			packageOut,
 			structName,
 			typeForValue(iresult, structName, tags, subStructMap, convertFloats))
 		formatted, err := format.Source([]byte(src))
@@ -230,8 +235,8 @@ func Generate(input io.Reader, parser Parser, structName, pkgName string, tags [
 		return nil, fmt.Errorf("unexpected type: %T", iresult)
 	}
 
-	src := fmt.Sprintf("package %s\ntype %s %s}",
-		pkgName,
+	src := fmt.Sprintf("%stype %s %s}",
+		packageOut,
 		structName,
 		generateTypes(result, structName, tags, 0, subStructMap, convertFloats))
 
